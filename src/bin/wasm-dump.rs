@@ -1,5 +1,6 @@
 use std::process;
 use wasm_runtime::{
+    diff::{diff_modules, diff_summary},
     module::parse_module,
     parser::{parse_header, section_iter, ParseError},
     sections::{
@@ -14,6 +15,20 @@ use wasm_runtime::{
 fn main() {
     let args: Vec<String> = std::env::args().collect();
 
+    // --diff takes two file arguments; handle it before the standard single-file dispatch.
+    if args.get(1).map(|s| s.as_str()) == Some("--diff") {
+        match args.as_slice() {
+            [_, _, path_a, path_b] => {
+                run_diff(path_a, path_b);
+                return;
+            }
+            _ => {
+                eprintln!("Usage: wasm-dump --diff <a.wasm> <b.wasm>");
+                process::exit(1);
+            }
+        }
+    }
+
     let (verbose, validate, stats, path) = match args.as_slice() {
         [_, flag, path] if flag == "--verbose" || flag == "-v" => {
             (true, false, false, path.clone())
@@ -22,7 +37,9 @@ fn main() {
         [_, flag, path] if flag == "--stats" => (false, false, true, path.clone()),
         [_, path] => (false, false, false, path.clone()),
         _ => {
-            eprintln!("Usage: wasm-dump [--verbose|-v | --validate | --stats] <file.wasm>");
+            eprintln!(
+                "Usage: wasm-dump [--verbose|-v | --validate | --stats | --diff <a.wasm> <b.wasm>] <file.wasm>"
+            );
             process::exit(1);
         }
     };
@@ -128,6 +145,31 @@ fn main() {
             }
         }
     }
+}
+
+fn run_diff(path_a: &str, path_b: &str) {
+    let read = |p: &str| {
+        std::fs::read(p).unwrap_or_else(|e| {
+            eprintln!("error: cannot read '{}': {}", p, e);
+            process::exit(1);
+        })
+    };
+    let a = read(path_a);
+    let b = read(path_b);
+
+    let diffs = match diff_modules(&a, &b) {
+        Ok(d) => d,
+        Err(e) => {
+            eprintln!("error: {}", e);
+            process::exit(1);
+        }
+    };
+
+    println!("diff: {} vs {}", path_a, path_b);
+    for d in &diffs {
+        println!("  {}", d);
+    }
+    println!("\n{}", diff_summary(&diffs));
 }
 
 fn print_count(res: Result<usize, ParseError>, noun: &str) {
