@@ -43,6 +43,9 @@ jobs:
       - name: Cache
         uses: Swatinem/rust-cache@v2
 
+      - name: Remove lock file for MSRV compatibility
+        run: rm -f Cargo.lock
+
       - name: check (MSRV)
         run: cargo check --all-targets
 
