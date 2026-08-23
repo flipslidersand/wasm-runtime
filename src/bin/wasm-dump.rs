@@ -24,9 +24,7 @@ fn main() {
         [_, flag, path] if flag == "--wat" => (false, false, false, true, path.clone()),
         [_, path] => (false, false, false, false, path.clone()),
         _ => {
-            eprintln!(
-                "Usage: wasm-dump [--verbose|-v | --validate | --stats | --wat] <file.wasm>"
-            );
+            eprintln!("Usage: wasm-dump [--verbose|-v | --validate | --stats | --wat] <file.wasm>");
             process::exit(1);
         }
     };
