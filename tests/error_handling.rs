@@ -8,8 +8,8 @@ use wasm_runtime::{
     module::{parse_module, ValidationError},
     parser::{section_iter, ParseError},
     sections::{
-        decode_code_section, decode_custom_section, decode_data_section,
-        decode_global_section, decode_table_section, ExportKind,
+        decode_code_section, decode_custom_section, decode_data_section, decode_global_section,
+        decode_table_section, ExportKind,
     },
 };
 
@@ -55,17 +55,17 @@ fn parse_error_invalid_mutability() {
 fn parse_error_invalid_utf8() {
     // custom section: name_len=2, name=[\xFF\xFE] (invalid UTF-8)
     let payload = [0x02, 0xFF, 0xFE];
-    assert_eq!(decode_custom_section(&payload), Err(ParseError::InvalidUtf8));
+    assert_eq!(
+        decode_custom_section(&payload),
+        Err(ParseError::InvalidUtf8)
+    );
 }
 
 #[test]
 fn parse_error_size_mismatch_code_body_too_large() {
     // code section: count=1, body_size=10, but only 2 bytes follow
     let payload = [0x01, 0x0A, 0x00, 0x0B];
-    assert_eq!(
-        decode_code_section(&payload),
-        Err(ParseError::SizeMismatch)
-    );
+    assert_eq!(decode_code_section(&payload), Err(ParseError::SizeMismatch));
 }
 
 #[test]
@@ -93,7 +93,11 @@ fn parse_error_unsupported_data_flag() {
 #[test]
 fn display_unexpected_eof() {
     let msg = format!("{}", ParseError::UnexpectedEof);
-    assert!(msg.contains("unexpected") && msg.contains("end"), "got: {}", msg);
+    assert!(
+        msg.contains("unexpected") && msg.contains("end"),
+        "got: {}",
+        msg
+    );
 }
 
 #[test]
@@ -111,19 +115,31 @@ fn display_invalid_version() {
 #[test]
 fn display_leb128_overflow() {
     let msg = format!("{}", ParseError::Leb128Overflow);
-    assert!(msg.contains("LEB128") && msg.contains("overflow"), "got: {}", msg);
+    assert!(
+        msg.contains("LEB128") && msg.contains("overflow"),
+        "got: {}",
+        msg
+    );
 }
 
 #[test]
 fn display_unknown_val_type() {
     let msg = format!("{}", ParseError::UnknownValType(0xAB));
-    assert!(msg.contains("value type") && msg.contains("0xAB"), "got: {}", msg);
+    assert!(
+        msg.contains("value type") && msg.contains("0xAB"),
+        "got: {}",
+        msg
+    );
 }
 
 #[test]
 fn display_invalid_func_type() {
     let msg = format!("{}", ParseError::InvalidFuncType(0x61));
-    assert!(msg.contains("0x60") || msg.contains("functype"), "got: {}", msg);
+    assert!(
+        msg.contains("0x60") || msg.contains("functype"),
+        "got: {}",
+        msg
+    );
 }
 
 #[test]
@@ -165,13 +181,21 @@ fn display_invalid_utf8() {
 #[test]
 fn display_size_mismatch() {
     let msg = format!("{}", ParseError::SizeMismatch);
-    assert!(msg.contains("size") || msg.contains("mismatch"), "got: {}", msg);
+    assert!(
+        msg.contains("size") || msg.contains("mismatch"),
+        "got: {}",
+        msg
+    );
 }
 
 #[test]
 fn display_unsupported_init_expr() {
     let msg = format!("{}", ParseError::UnsupportedInitExpr(0xAA));
-    assert!(msg.contains("init_expr") || msg.contains("opcode"), "got: {}", msg);
+    assert!(
+        msg.contains("init_expr") || msg.contains("opcode"),
+        "got: {}",
+        msg
+    );
 }
 
 #[test]
@@ -183,7 +207,11 @@ fn display_unsupported_data_flag() {
 #[test]
 fn display_unsupported_element_flag() {
     let msg = format!("{}", ParseError::UnsupportedElementFlag(0x08));
-    assert!(msg.contains("element") && msg.contains("flag"), "got: {}", msg);
+    assert!(
+        msg.contains("element") && msg.contains("flag"),
+        "got: {}",
+        msg
+    );
 }
 
 // ── #57: ValidationError Display メッセージ内容テスト ───
@@ -192,9 +220,16 @@ fn display_unsupported_element_flag() {
 fn display_validation_func_code_mismatch() {
     let msg = format!(
         "{}",
-        ValidationError::FuncCodeCountMismatch { functions: 2, code: 1 }
+        ValidationError::FuncCodeCountMismatch {
+            functions: 2,
+            code: 1
+        }
     );
-    assert!(msg.contains("function") && msg.contains("code"), "got: {}", msg);
+    assert!(
+        msg.contains("function") && msg.contains("code"),
+        "got: {}",
+        msg
+    );
     assert!(msg.contains("2") && msg.contains("1"), "got: {}", msg);
 }
 
@@ -202,7 +237,10 @@ fn display_validation_func_code_mismatch() {
 fn display_validation_type_index_out_of_range() {
     let msg = format!(
         "{}",
-        ValidationError::TypeIndexOutOfRange { index: 5, type_count: 1 }
+        ValidationError::TypeIndexOutOfRange {
+            index: 5,
+            type_count: 1
+        }
     );
     assert!(msg.contains("type") && msg.contains("5"), "got: {}", msg);
 }
@@ -225,7 +263,10 @@ fn display_validation_export_index_out_of_range() {
 fn display_validation_element_table_out_of_range() {
     let msg = format!(
         "{}",
-        ValidationError::ElementTableIndexOutOfRange { index: 1, table_space: 0 }
+        ValidationError::ElementTableIndexOutOfRange {
+            index: 1,
+            table_space: 0
+        }
     );
     assert!(msg.contains("table") && msg.contains("1"), "got: {}", msg);
 }
@@ -234,7 +275,10 @@ fn display_validation_element_table_out_of_range() {
 fn display_validation_element_func_out_of_range() {
     let msg = format!(
         "{}",
-        ValidationError::ElementFuncIndexOutOfRange { index: 3, func_space: 1 }
+        ValidationError::ElementFuncIndexOutOfRange {
+            index: 3,
+            func_space: 1
+        }
     );
     assert!(msg.contains("func") && msg.contains("3"), "got: {}", msg);
 }
@@ -243,7 +287,10 @@ fn display_validation_element_func_out_of_range() {
 fn display_validation_start_func_out_of_range() {
     let msg = format!(
         "{}",
-        ValidationError::StartFuncIndexOutOfRange { index: 2, func_space: 1 }
+        ValidationError::StartFuncIndexOutOfRange {
+            index: 2,
+            func_space: 1
+        }
     );
     assert!(msg.contains("start") && msg.contains("2"), "got: {}", msg);
 }
@@ -252,7 +299,10 @@ fn display_validation_start_func_out_of_range() {
 fn display_validation_datacount_mismatch() {
     let msg = format!(
         "{}",
-        ValidationError::DataCountMismatch { declared: 3, actual: 1 }
+        ValidationError::DataCountMismatch {
+            declared: 3,
+            actual: 1
+        }
     );
     assert!(msg.contains("3") && msg.contains("1"), "got: {}", msg);
 }
@@ -347,10 +397,7 @@ fn parse_module_propagates_unknown_val_type() {
     // type section: count=1, func marker=0x60, 1 param=0xAB (invalid valtype)
     let bad_type = &[0x01, 0x60, 0x01, 0xAB, 0x00];
     let bytes = make_wasm(&[(1, bad_type)]);
-    assert_eq!(
-        parse_module(&bytes),
-        Err(ParseError::UnknownValType(0xAB))
-    );
+    assert_eq!(parse_module(&bytes), Err(ParseError::UnknownValType(0xAB)));
 }
 
 #[test]
