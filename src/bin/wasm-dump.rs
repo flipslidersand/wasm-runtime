@@ -2,6 +2,7 @@ use std::process;
 use std::time::Instant;
 use wasm_runtime::{
     diff::{diff_modules, diff_summary},
+    explain::explain_bytes,
     module::parse_module,
     parser::{parse_header, section_iter, ParseError},
     sections::{
@@ -20,6 +21,7 @@ struct Flags {
     stats: bool,
     wat: bool,
     timing: bool,
+    explain: bool,
 }
 
 /// Parse CLI arguments into (Flags, path).
@@ -31,6 +33,7 @@ fn parse_flags(args: &[String]) -> Result<(Flags, String), String> {
         stats: false,
         wat: false,
         timing: false,
+        explain: false,
     };
     let mut path: Option<String> = None;
 
@@ -42,6 +45,7 @@ fn parse_flags(args: &[String]) -> Result<(Flags, String), String> {
             "--stats" => flags.stats = true,
             "--wat" => flags.wat = true,
             "--timing" => flags.timing = true,
+            "--explain" => flags.explain = true,
             s if s.starts_with('-') => {
                 return Err(format!("unknown flag: {}", s));
             }
@@ -83,7 +87,7 @@ fn main() {
         Err(msg) => {
             eprintln!("error: {}", msg);
             eprintln!(
-                "Usage: wasm-dump [--verbose|-v] [--validate] [--stats] [--timing] [--wat] <file.wasm>"
+                "Usage: wasm-dump [--verbose|-v] [--validate] [--stats] [--timing] [--wat] [--explain] <file.wasm>"
             );
             eprintln!("       wasm-dump --diff <a.wasm> <b.wasm>");
             process::exit(1);
@@ -209,6 +213,13 @@ fn main() {
             } else {
                 println!("\nparse time: {:.3} ms", us as f64 / 1_000.0);
             }
+        }
+    }
+
+    if flags.explain {
+        println!("\nexplain:");
+        for line in explain_bytes(&bytes) {
+            println!("{}", line);
         }
     }
 }
