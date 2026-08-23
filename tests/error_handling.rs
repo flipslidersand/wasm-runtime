@@ -327,7 +327,7 @@ fn section_iter_incomplete_leb128_size() {
     let results: Vec<_> = section_iter(&bytes).collect();
     // Iterator does not halt on error, so we get at least one UnexpectedEof item.
     assert!(
-        results.iter().any(|r| *r == Err(ParseError::UnexpectedEof)),
+        results.contains(&Err(ParseError::UnexpectedEof)),
         "expected at least one UnexpectedEof, got: {:?}",
         results
     );
