@@ -1,4 +1,5 @@
 use std::process;
+use std::time::Instant;
 use wasm_runtime::{
     diff::{diff_modules, diff_summary},
     module::parse_module,
@@ -18,6 +19,7 @@ struct Flags {
     validate: bool,
     stats: bool,
     wat: bool,
+    timing: bool,
 }
 
 /// Parse CLI arguments into (Flags, path).
@@ -28,6 +30,7 @@ fn parse_flags(args: &[String]) -> Result<(Flags, String), String> {
         validate: false,
         stats: false,
         wat: false,
+        timing: false,
     };
     let mut path: Option<String> = None;
 
@@ -38,6 +41,7 @@ fn parse_flags(args: &[String]) -> Result<(Flags, String), String> {
             "--validate" => flags.validate = true,
             "--stats" => flags.stats = true,
             "--wat" => flags.wat = true,
+            "--timing" => flags.timing = true,
             s if s.starts_with('-') => {
                 return Err(format!("unknown flag: {}", s));
             }
@@ -78,7 +82,9 @@ fn main() {
         Ok(v) => v,
         Err(msg) => {
             eprintln!("error: {}", msg);
-            eprintln!("Usage: wasm-dump [--verbose|-v] [--validate] [--stats] [--wat] <file.wasm>");
+            eprintln!(
+                "Usage: wasm-dump [--verbose|-v] [--validate] [--stats] [--timing] [--wat] <file.wasm>"
+            );
             eprintln!("       wasm-dump --diff <a.wasm> <b.wasm>");
             process::exit(1);
         }
@@ -161,18 +167,21 @@ fn main() {
         print_verbose(&bytes);
     }
 
-    // Parse module once when any of stats / wat / validate are requested.
-    let need_module = flags.stats || flags.wat || flags.validate;
-    let module = if need_module {
-        match parse_module(&bytes) {
-            Ok(m) => Some(m),
+    // Parse module once when any of stats / wat / validate / timing are requested.
+    let need_module = flags.stats || flags.wat || flags.validate || flags.timing;
+    let (module, parse_elapsed_us) = if need_module {
+        let t0 = Instant::now();
+        let m = match parse_module(&bytes) {
+            Ok(m) => m,
             Err(e) => {
                 eprintln!("error: {}", e);
                 process::exit(1);
             }
-        }
+        };
+        let elapsed = t0.elapsed().as_micros() as u64;
+        (Some(m), Some(elapsed))
     } else {
-        None
+        (None, None)
     };
 
     if flags.stats {
@@ -189,6 +198,16 @@ fn main() {
             Err(e) => {
                 eprintln!("\nvalidation error: {}", e);
                 process::exit(1);
+            }
+        }
+    }
+
+    if flags.timing {
+        if let Some(us) = parse_elapsed_us {
+            if us < 1_000 {
+                println!("\nparse time: {} µs", us);
+            } else {
+                println!("\nparse time: {:.3} ms", us as f64 / 1_000.0);
             }
         }
     }
